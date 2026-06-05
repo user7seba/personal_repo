@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Reminders</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #191919;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 18px 20px;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+
+  .pct-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #a8a8a8;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .date-text {
+    font-size: 11px;
+    color: #555;
+    text-transform: capitalize;
+  }
+
+  .bar-bg {
+    height: 5px;
+    background: #2e2e2e;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #5DCAA5;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  .divider {
+    height: 1px;
+    background: #2e2e2e;
+    margin-bottom: 10px;
+  }
+
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .item:hover {
+    background: #222;
+  }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid #444;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s ease;
+    background: transparent;
+  }
+
+  .checkbox.checked {
+    background: #1D9E75;
+    border-color: #1D9E75;
+  }
+
+  .check-icon {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.18s ease;
+    color: white;
+    font-size: 11px;
+  }
+
+  .checkbox.checked .check-icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .item-label {
+    font-size: 14px;
+    color: #ccc;
+    transition: color 0.18s;
+  }
+
+  .item.checked .item-label {
+    color: #444;
+    text-decoration: line-through;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="progress-label">
+    <span class="pct-text" id="pct">0%</span>
+    <span class="date-text" id="date-label"></span>
+  </div>
+  <div class="bar-bg">
+    <div class="bar-fill" id="bar"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="items">
+    <div class="item" data-key="estudiar" onclick="toggle(this)">
+      <div class="checkbox"><i class="ti ti-check check-icon"></i></div>
+      <span class="item-label">Estudiar</span>
+    </div>
+    <div class="item" data-key="customizar" onclick="toggle(this)">
+      <div class="checkbox"><i class="ti ti-check check-icon"></i></div>
+      <span class="item-label">Customizar algo nuevo</span>
+    </div>
+    <div class="item" data-key="programar" onclick="toggle(this)">
+      <div class="checkbox"><i class="ti ti-check check-icon"></i></div>
+      <span class="item-label">Programar</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEYS = ['estudiar', 'customizar', 'programar'];
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function loadState() {
+  const today = todayStr();
+  try {
+    const raw = localStorage.getItem('daily_reminders_v1');
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    if (obj.date !== today) return {};
+    return obj.checks || {};
+  } catch(e) { return {}; }
+}
+
+function saveState(checks) {
+  localStorage.setItem('daily_reminders_v1', JSON.stringify({ date: todayStr(), checks }));
+}
+
+function updateUI() {
+  const checks = loadState();
+  let done = 0;
+  KEYS.forEach(k => { if (checks[k]) done++; });
+  const pct = Math.round((done / KEYS.length) * 100);
+
+  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('bar').style.width = pct + '%';
+
+  document.querySelectorAll('.item').forEach(item => {
+    const k = item.dataset.key;
+    const isChecked = !!checks[k];
+    const box = item.querySelector('.checkbox');
+    item.classList.toggle('checked', isChecked);
+    box.classList.toggle('checked', isChecked);
+  });
+
+  const d = new Date();
+  document.getElementById('date-label').textContent = d.toLocaleDateString('es-PY', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function toggle(item) {
+  const k = item.dataset.key;
+  const checks = loadState();
+  checks[k] = !checks[k];
+  saveState(checks);
+  updateUI();
+}
+
+updateUI();
+</script>
+</body>
+</html>
