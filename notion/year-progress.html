@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Year Progress</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: transparent;
+    padding: 16px 20px;
+    font-family: sans-serif;
+  }
+
+  .wrap {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 260px;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .year-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  .pct-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: #e8e8e8;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  .bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 0.5px solid rgba(255,255,255,0.12);
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #e8e8e8;
+  }
+
+  .bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 1px; }
+
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #e8e8e8;
+  }
+
+  .stat-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: #555;
+    text-transform: uppercase;
+  }
+
+  .divider-v {
+    width: 0.5px;
+    height: 28px;
+    background: rgba(255,255,255,0.1);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-row">
+    <span class="year-label" id="yr-label">2026</span>
+    <span class="pct-big" id="pct-big">0%</span>
+  </div>
+  <div class="bar-bg">
+    <div class="bar-fill" id="bar"></div>
+  </div>
+  <div class="bottom-row">
+    <div class="stat">
+      <span class="stat-val" id="days-gone">0</span>
+      <span class="stat-lbl">days gone</span>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat" style="align-items:center">
+      <span class="stat-val" id="days-left">0</span>
+      <span class="stat-lbl">days left</span>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat" style="align-items:flex-end">
+      <span class="stat-val" id="weeks-left">0</span>
+      <span class="stat-lbl">weeks left</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function calc() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const start = new Date(year, 0, 1);
+  const end = new Date(year + 1, 0, 1);
+  const total = (end - start) / 86400000;
+  const gone = Math.floor((now - start) / 86400000);
+  const left = total - gone;
+  const pct = Math.round((gone / total) * 100);
+
+  document.getElementById('yr-label').textContent = year;
+  document.getElementById('pct-big').textContent = pct + '%';
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('days-gone').textContent = gone;
+  document.getElementById('days-left').textContent = left;
+  document.getElementById('weeks-left').textContent = Math.floor(left / 7);
+}
+
+calc();
+</script>
+</body>
+</html>
