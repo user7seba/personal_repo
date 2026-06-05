@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Minimalist Kanban Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #191919;
+    font-family: 'Space Mono', monospace;
+    padding: 16px 20px;
+    min-height: 100vh;
+  }
+
+  .cal { width: 100%; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+  .month-title { font-size: 13px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #e8e8e8; }
+
+  .nav-btn { background: none; border: 0.5px solid #333; color: #888; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .nav-btn:hover { background: #222; }
+  .nav-group { display: flex; gap: 6px; align-items: center; }
+  .today-btn { background: none; border: 0.5px solid #333; color: #888; border-radius: 6px; padding: 4px 10px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer; transition: background 0.15s; }
+  .today-btn:hover { background: #222; }
+
+  .grid-head { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+  .day-name { text-align: center; font-size: 9px; letter-spacing: 0.12em; color: #555; padding: 4px 0; text-transform: uppercase; }
+
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+  .cell { min-height: 72px; border: 0.5px solid #2a2a2a; border-radius: 6px; padding: 5px; cursor: pointer; transition: background 0.12s; overflow: hidden; }
+  .cell:hover { background: #222; }
+  .cell.other-month { opacity: 0.3; }
+  .cell.today { border-color: #555; }
+
+  .cell-num { font-size: 11px; font-weight: 700; color: #666; margin-bottom: 3px; }
+  .cell.today .cell-num { color: #e8e8e8; }
+
+  .task-pill { font-size: 9px; letter-spacing: 0.03em; border-radius: 3px; padding: 1px 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
+  .task-pill.critical { background: #3d1a1a; color: #f09595; }
+  .task-pill.pending  { background: #2e2a18; color: #EF9F27; }
+  .task-pill.chill    { background: #1a2e28; color: #5DCAA5; }
+  .task-pill.done     { background: #252525; color: #444; text-decoration: line-through; opacity: 0.5; }
+  .more { font-size: 9px; color: #444; margin-top: 1px; }
+
+  .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10; align-items: center; justify-content: center; }
+  .overlay.active { display: flex; }
+
+  .popup { background: #1e1e1e; border: 0.5px solid #333; border-radius: 12px; padding: 18px; width: 290px; max-height: 80vh; overflow-y: auto; }
+
+  .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .popup-date-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #e8e8e8; }
+  .close-x { background: none; border: none; color: #555; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 2px; }
+  .close-x:hover { color: #e8e8e8; }
+
+  .task-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+  .task-card { border-radius: 7px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+  .task-card.critical { background: #3d1a1a; }
+  .task-card.pending  { background: #2e2a18; }
+  .task-card.chill    { background: #1a2e28; }
+  .task-card.done     { background: #222; opacity: 0.45; }
+
+  .task-card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .task-card-title { font-size: 11px; font-weight: 700; flex: 1; }
+  .task-card.critical .task-card-title { color: #f09595; }
+  .task-card.pending  .task-card-title { color: #EF9F27; }
+  .task-card.chill    .task-card-title { color: #5DCAA5; }
+  .task-card.done     .task-card-title { color: #444; text-decoration: line-through; }
+
+  .task-card-desc { font-size: 10px; color: #aaa; line-height: 1.4; margin-top: 2px; }
+
+  .task-actions { display: flex; gap: 4px; }
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0.5; padding: 0 1px; line-height: 1; transition: opacity 0.15s; }
+  .icon-btn:hover { opacity: 1; }
+  .task-card.critical .icon-btn { color: #f09595; }
+  .task-card.pending  .icon-btn { color: #EF9F27; }
+  .task-card.chill    .icon-btn { color: #5DCAA5; }
+  .task-card.done     .icon-btn { color: #888; }
+
+  .status-badge { font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
+  .status-badge.critical { background: #5a1f1f; color: #f09595; }
+  .status-badge.pending  { background: #3d3010; color: #EF9F27; }
+  .status-badge.chill    { background: #1f3d30; color: #5DCAA5; }
+  .status-badge.done     { background: #2a2a2a; color: #444; }
+
+  .add-toggle { width: 100%; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em; padding: 7px; border-radius: 7px; border: 0.5px dashed #333; background: none; color: #555; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .add-toggle:hover { background: #252525; color: #e8e8e8; }
+
+  .add-form { display: none; margin-top: 10px; }
+  .add-form.open { display: block; }
+
+  .add-form input[type=text], .add-form textarea {
+    width: 100%;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 0.5px solid #333;
+    background: #252525;
+    color: #e8e8e8;
+    margin-bottom: 7px;
+    outline: none;
+    resize: none;
+  }
+  .add-form textarea { height: 52px; line-height: 1.4; }
+
+  .status-row { display: flex; gap: 5px; margin-bottom: 8px; }
+  .status-opt { flex: 1; text-align: center; font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.05em; padding: 5px 2px; border-radius: 5px; cursor: pointer; border: 1.5px solid transparent; transition: all 0.15s; }
+  .status-opt.critical { background: #3d1a1a; color: #f09595; }
+  .status-opt.pending  { background: #2e2a18; color: #EF9F27; }
+  .status-opt.chill    { background: #1a2e28; color: #5DCAA5; }
+  .status-opt.selected.critical { border-color: #f09595; }
+  .status-opt.selected.pending  { border-color: #EF9F27; }
+  .status-opt.selected.chill    { border-color: #5DCAA5; }
+
+  .btn-add { width: 100%; font-family: 'Space Mono', monospace; font-size: 10px; padding: 7px; border-radius: 6px; border: 0.5px solid #333; background: #252525; color: #e8e8e8; cursor: pointer; letter-spacing: 0.06em; transition: background 0.15s; }
+  .btn-add:hover { background: #2e2e2e; }
+</style>
+</head>
+<body>
+
+<div class="cal">
+  <div class="header">
+    <span class="month-title" id="month-title"></span>
+    <div class="nav-group">
+      <button class="today-btn" onclick="goToday()">today</button>
+      <button class="nav-btn" onclick="navigate(-1)"><i class="ti ti-chevron-left"></i></button>
+      <button class="nav-btn" onclick="navigate(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+  </div>
+  <div class="grid-head">
+    <div class="day-name">sun</div><div class="day-name">mon</div><div class="day-name">tue</div>
+    <div class="day-name">wed</div><div class="day-name">thu</div><div class="day-name">fri</div>
+    <div class="day-name">sat</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-header">
+      <span class="popup-date-label" id="popup-date"></span>
+      <button class="close-x" onclick="closePopup()">×</button>
+    </div>
+    <div class="task-list" id="task-list"></div>
+    <div class="add-section">
+      <button class="add-toggle" id="add-toggle" onclick="toggleForm()">+ add task</button>
+      <div class="add-form" id="add-form">
+        <input type="text" id="task-input" placeholder="task title..." />
+        <textarea id="task-desc" placeholder="description (optional)..."></textarea>
+        <div class="status-row">
+          <div class="status-opt critical selected" data-status="critical" onclick="selectStatus('critical')">critical</div>
+          <div class="status-opt pending" data-status="pending" onclick="selectStatus('pending')">pending</div>
+          <div class="status-opt chill" data-status="chill" onclick="selectStatus('chill')">chill</div>
+        </div>
+        <button class="btn-add" onclick="addTask()">+ add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let cur = new Date();
+let viewYear = cur.getFullYear();
+let viewMonth = cur.getMonth();
+let tasks = {};
+let activeDay = null;
+let activeStatus = 'critical';
+let formOpen = false;
+
+function loadTasks() { try { const r = localStorage.getItem('cal_tasks_v2'); return r ? JSON.parse(r) : {}; } catch(e) { return {}; } }
+function saveTasks() { localStorage.setItem('cal_tasks_v2', JSON.stringify(tasks)); }
+tasks = loadTasks();
+
+function dayKey(y, m, d) { return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+
+function render() {
+  document.getElementById('month-title').textContent = MONTHS[viewMonth] + ' ' + viewYear;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const first = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+  const today = new Date();
+  const totalCells = Math.ceil((first + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    let day, month, year, isOther = false;
+    if (i < first) {
+      day = daysInPrev - first + i + 1; month = viewMonth - 1; year = viewYear;
+      if (month < 0) { month = 11; year--; } isOther = true;
+    } else if (i >= first + daysInMonth) {
+      day = i - first - daysInMonth + 1; month = viewMonth + 1; year = viewYear;
+      if (month > 11) { month = 0; year++; } isOther = true;
+    } else { day = i - first + 1; month = viewMonth; year = viewYear; }
+
+    if (isOther) cell.classList.add('other-month');
+    if (!isOther && day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()) cell.classList.add('today');
+
+    const num = document.createElement('div');
+    num.className = 'cell-num';
+    num.textContent = day;
+    cell.appendChild(num);
+
+    const key = dayKey(year, month, day);
+    const dayTasks = tasks[key] || [];
+    dayTasks.slice(0, 2).forEach(t => {
+      const pill = document.createElement('div');
+      pill.className = 'task-pill ' + (t.done ? 'done' : t.status);
+      pill.textContent = t.title;
+      cell.appendChild(pill);
+    });
+    if (dayTasks.length > 2) {
+      const more = document.createElement('div');
+      more.className = 'more';
+      more.textContent = '+' + (dayTasks.length - 2) + ' more';
+      cell.appendChild(more);
+    }
+
+    cell.onclick = () => openPopup(year, month, day);
+    grid.appendChild(cell);
+  }
+}
+
+function navigate(dir) {
+  viewMonth += dir;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  render();
+}
+
+function goToday() { viewYear = cur.getFullYear(); viewMonth = cur.getMonth(); render(); }
+
+function openPopup(y, m, d) {
+  activeDay = dayKey(y, m, d);
+  document.getElementById('popup-date').textContent = MONTHS_SHORT[m] + ' ' + d + ', ' + y;
+  document.getElementById('task-input').value = '';
+  document.getElementById('task-desc').value = '';
+  selectStatus('critical');
+  formOpen = false;
+  document.getElementById('add-form').classList.remove('open');
+  document.getElementById('add-toggle').textContent = '+ add task';
+  renderTaskList();
+  document.getElementById('overlay').classList.add('active');
+}
+
+function renderTaskList() {
+  const list = document.getElementById('task-list');
+  const dayTasks = tasks[activeDay] || [];
+  list.innerHTML = '';
+  dayTasks.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'task-card ' + (t.done ? 'done' : t.status);
+
+    const top = document.createElement('div');
+    top.className = 'task-card-top';
+
+    const badge = document.createElement('span');
+    badge.className = 'status-badge ' + (t.done ? 'done' : t.status);
+    badge.textContent = t.done ? 'done' : t.status;
+
+    const title = document.createElement('span');
+    title.className = 'task-card-title';
+    title.textContent = t.title;
+
+    const actions = document.createElement('div');
+    actions.className = 'task-actions';
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'icon-btn';
+    doneBtn.innerHTML = t.done ? '<i class="ti ti-rotate-clockwise"></i>' : '<i class="ti ti-check"></i>';
+    doneBtn.onclick = (e) => { e.stopPropagation(); toggleDone(i); };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.innerHTML = '<i class="ti ti-trash"></i>';
+    delBtn.onclick = (e) => { e.stopPropagation(); deleteTask(i); };
+
+    actions.appendChild(doneBtn);
+    actions.appendChild(delBtn);
+    top.appendChild(badge);
+    top.appendChild(title);
+    top.appendChild(actions);
+    card.appendChild(top);
+
+    if (t.desc) {
+      const desc = document.createElement('div');
+      desc.className = 'task-card-desc';
+      desc.textContent = t.desc;
+      card.appendChild(desc);
+    }
+
+    list.appendChild(card);
+  });
+}
+
+function toggleDone(i) {
+  if (!tasks[activeDay]) return;
+  tasks[activeDay][i].done = !tasks[activeDay][i].done;
+  saveTasks(); renderTaskList(); render();
+}
+
+function deleteTask(i) {
+  if (!tasks[activeDay]) return;
+  tasks[activeDay].splice(i, 1);
+  if (tasks[activeDay].length === 0) delete tasks[activeDay];
+  saveTasks(); renderTaskList(); render();
+}
+
+function toggleForm() {
+  formOpen = !formOpen;
+  document.getElementById('add-form').classList.toggle('open', formOpen);
+  document.getElementById('add-toggle').textContent = formOpen ? '− cancel' : '+ add task';
+  if (formOpen) setTimeout(() => document.getElementById('task-input').focus(), 50);
+}
+
+function selectStatus(s) {
+  activeStatus = s;
+  document.querySelectorAll('.status-opt').forEach(el => el.classList.toggle('selected', el.dataset.status === s));
+}
+
+function addTask() {
+  const title = document.getElementById('task-input').value.trim();
+  if (!title) return;
+  const desc = document.getElementById('task-desc').value.trim();
+  if (!tasks[activeDay]) tasks[activeDay] = [];
+  tasks[activeDay].push({ title, desc, status: activeStatus, done: false });
+  saveTasks();
+  document.getElementById('task-input').value = '';
+  document.getElementById('task-desc').value = '';
+  toggleForm(); // Oculta automáticamente el formulario al añadir
+  renderTaskList(); render();
+}
+
+function closePopup() { document.getElementById('overlay').classList.remove('active'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('overlay')) closePopup(); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePopup();
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('task-input')) addTask();
+});
+
+render();
+</script>
+</body>
+</html>
