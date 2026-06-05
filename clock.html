@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #191919;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 18px 20px;
+  }
+
+  .clock-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0px;
+  }
+
+  .time-display {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    line-height: 1;
+  }
+
+  .digits {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    color: #e8e8e8;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .sep {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    color: #555;
+    line-height: 1;
+    padding-bottom: 3px;
+    animation: blink 1s step-start infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .date-str {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #555;
+    letter-spacing: 0.1em;
+    align-self: flex-end;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="clock-wrap">
+  <div class="time-display">
+    <span class="digits" id="hh">00</span>
+    <span class="sep">:</span>
+    <span class="digits" id="mm">00</span>
+  </div>
+  <span class="date-str" id="datestr"></span>
+</div>
+
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function tick() {
+  const now = new Date();
+  document.getElementById('hh').textContent = pad(now.getHours());
+  document.getElementById('mm').textContent = pad(now.getMinutes());
+  document.getElementById('datestr').textContent = MONTHS[now.getMonth()] + ' ' + now.getDate();
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
