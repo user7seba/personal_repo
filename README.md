@@ -23,16 +23,9 @@ PowerShell profile and terminal customization files. Copy what you need into you
 
 Base URL: `https://user7seba.github.io/notion_widgets/`
 
-| widget | link |
-|--------|------|
-| clock | [notion/clock.html](https://user7seba.github.io/notion_widgets/notion/clock.html) |
-| daily reminders | [notion/daily-reminders.html](https://user7seba.github.io/notion_widgets/notion/daily-reminders.html) |
-
 ---
 
 ## 🛠️ stack
-
-> "stack" = the tools and languages i use across projects.
 
 - HTML / CSS / JS — widgets
 - Luau — Roblox scripting
